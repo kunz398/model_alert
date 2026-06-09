@@ -1,0 +1,11 @@
+### Workflow — first time setup ##
+
+Step 1: build your image + pull Gemma (once)
+
+docker compose --profile setup up --build
+
+# Step 2: run everything normally
+docker compose up -d
+
+# Step 3 Subsequent deploys after code changes:
+docker compose build email_sender && docker compose up -d email_sender

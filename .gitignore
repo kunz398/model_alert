@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+
+# Environment files
+.env
+!.env.example
+
+# Local test/sample log folders
+niue_logs/
+coks_log/
+coks_logs/
+croc_niue/
+croco_niue/

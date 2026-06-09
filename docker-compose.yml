@@ -1,0 +1,76 @@
+services:
+
+  # ── 1. Pull model (only runs with --profile setup) ──────────────
+  # ollama_pull_gemma3_4b:
+  #   image: ollama/ollama:latest
+  #   container_name: ollama_pull_gemma3_4b
+  #   depends_on:
+  #     ollama:
+  #       condition: service_started
+  #   environment:
+  #     - OLLAMA_HOST=ollama:11434
+  #   entrypoint: ["ollama", "pull", "gemma3:4b"]
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   restart: no
+  #   profiles: ["setup"]
+
+  # ── 2. Ollama server ─────────────────────────────────────────────
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: ollama
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "ollama list >/dev/null 2>&1"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+  #     start_period: 45s
+
+  # ── 3. Email sender ──────────────────────────────────────────────
+  email_sender:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: model-alerts-email-sender:1.0.0
+    container_name: email_sender
+    # depends_on:
+    #   ollama:
+    #     condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      # Match server local timezone so log filenames (YYYYMMDD) align with datetime.now()
+      - TZ=Pacific/Fiji
+      # - OLLAMA_HOST=ollama:11434
+    volumes:
+      # Required in prod when NIU_LOG_DIR=/mnt/DATA/NIU/logs
+      - /mnt/DATA/NIU/logs:/mnt/DATA/NIU/logs:ro
+      # Dev: local NIU sample logs (used when NIU_LOG_DIR=niue_logs)
+      - ./niue_logs:/app/niue_logs:ro
+      # Required in prod when COKS_LOG_DIR=/mnt/DATA/forecast_models/logs
+      - /mnt/DATA/forecast_models/logs:/mnt/DATA/forecast_models/logs:ro
+      # Dev: local COK sample logs (used when COKS_LOG_DIR=coks_logs)
+      - ./coks_logs:/app/coks_logs:ro
+      # Required in prod when CROCO_NIU_LOG_DIR=/data/kunal_croc/kunal_croc/logs
+      - /data/kunal_croc/kunal_croc/logs:/data/kunal_croc/kunal_croc/logs:ro
+      # Dev: local NIU_Currents sample logs (used when CROCO_NIU_LOG_DIR=croco_niue)
+      - ./croco_niue:/app/croco_niue:ro
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: "no"
+    command:
+      - python
+      - main.py
+
+# volumes:
+#   ollama_data:
