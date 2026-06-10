@@ -9,3 +9,7 @@ docker compose up -d
 
 # Step 3 Subsequent deploys after code changes:
 docker compose build email_sender && docker compose up -d email_sender
+
+
+cd /mnt/DATA/model_alerts/model_alert
+sudo /usr/bin/flock -n /tmp/model_alerts.lock /usr/bin/docker compose up --build --abort-on-container-exit --exit-code-from email_sender >> /mnt/DATA/model_alerts/logs/model_alerts_cron.log 2>&1

@@ -46,6 +46,7 @@ services:
     environment:
       # Match server local timezone so log filenames (YYYYMMDD) align with datetime.now()
       - TZ=Pacific/Fiji
+      - ENABLED_CHECKS
       # - OLLAMA_HOST=ollama:11434
     volumes:
       # Required in prod when NIU_LOG_DIR=/mnt/DATA/NIU/logs

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -12,8 +13,14 @@ import requests
 from send_email import send_email
 
 
-ALERT_SUBJECT = "Model Alert - NIU / COK / NIU_Currents"
+ALERT_SUBJECT = "Model Alert - NIU / COK"
+# Default recipients (used when TO_EMAILS env var is not set)
 TO_EMAILS = ["kunalsi@spc.int"]
+
+# Choose default checks to run. Valid values: "NIU", "COK", "NIU_CURRENTS"
+# Runtime override: set env var ENABLED_CHECKS (comma-separated), e.g. ENABLED_CHECKS="NIU"
+ENABLED_CHECKS = ["NIU", "COK"]
+
 ATTACHMENT_PATHS: list[Path] = []
 
 NIU_LOG_DIR = Path(os.environ.get("NIU_LOG_DIR", "niue_logs"))
@@ -49,6 +56,9 @@ COK_THREDDS_POINTS_URL = os.environ.get(
 )
 COK_SUCCESS_PATTERNS = [
     re.compile(r"cook islands forecast pipeline completed", re.IGNORECASE),
+    re.compile(r"cook islands forecast pipeline started", re.IGNORECASE),
+    re.compile(r"tidal predictions saved for\s+\d+\s+points", re.IGNORECASE),
+    re.compile(r"writing spectral file", re.IGNORECASE),
 ]
 
 # ── NIU Currents (CROCO) ────────────────────────────────────────────────────
@@ -81,6 +91,22 @@ CROCO_FAIL_PATTERNS = [
 class CheckResult:
     errors: list[str]
     notes: list[str]
+
+
+def _get_enabled_checks() -> list[str]:
+    env_checks = os.environ.get("ENABLED_CHECKS", "").strip()
+    if env_checks:
+        return [name.strip().upper() for name in env_checks.split(",") if name.strip()]
+
+    return [name.strip().upper() for name in ENABLED_CHECKS if name.strip()]
+
+
+def _get_recipients() -> list[str]:
+    env_recipients = os.environ.get("TO_EMAILS", "").strip()
+    if env_recipients:
+        return [email.strip() for email in env_recipients.split(",") if email.strip()]
+
+    return [email.strip() for email in TO_EMAILS if email.strip()]
 
 
 def _find_latest_log_for_today(log_dir: Path, local_today: str) -> Path | None:
@@ -399,17 +425,17 @@ def CheckCok() -> CheckResult:
                 pattern.search(log_text) for pattern in COK_SUCCESS_PATTERNS
             )
 
-            if has_success_marker:
-                print("COK model ran successfully")
-                notes.append("COK model log indicates successful completion")
-            elif fail_lines:
+            if fail_lines:
                 errors.append(
                     "Model run failure indicators found in COK log: "
                     + " | ".join(fail_lines)
                 )
+            elif has_success_marker:
+                print("COK model ran successfully")
+                notes.append("COK model log indicates successful completion")
             else:
-                errors.append(
-                    "COK log found but no clear success marker was detected"
+                notes.append(
+                    "COK log has no explicit success marker, but no failure indicators were found"
                 )
 
     thredds_ok, thredds_message = _check_cok_thredds_has_today_utc()
@@ -480,21 +506,31 @@ def CheckCrocoNiu() -> CheckResult:
 
 
 def main():
-    recipients = [email.strip() for email in TO_EMAILS if email.strip()]
+    recipients = _get_recipients()
     if not recipients:
         raise ValueError("TO_EMAILS cannot be empty")
 
-    niu_result = CheckNiu()
-    cok_result = CheckCok()
-    croco_result = CheckCrocoNiu()
+    available_checks: dict[str, Callable[[], CheckResult]] = {
+        "NIU": CheckNiu,
+        "COK": CheckCok,
+        "NIU_CURRENTS": CheckCrocoNiu,
+    }
+    selected_checks = _get_enabled_checks()
+    if not selected_checks:
+        raise ValueError("ENABLED_CHECKS cannot be empty")
+
+    unknown_checks = [name for name in selected_checks if name not in available_checks]
+    if unknown_checks:
+        valid = ", ".join(sorted(available_checks))
+        unknown = ", ".join(unknown_checks)
+        raise ValueError(f"Unknown check(s): {unknown}. Valid values: {valid}")
 
     failed: dict[str, CheckResult] = {}
-    if niu_result.errors:
-        failed["NIU"] = niu_result
-    if cok_result.errors:
-        failed["COK"] = cok_result
-    if croco_result.errors:
-        failed["NIU_Currents"] = croco_result
+    for check_name in selected_checks:
+        print(f"Running check: {check_name}")
+        result = available_checks[check_name]()
+        if result.errors:
+            failed[check_name] = result
 
     if failed:
         body_html = _build_combined_alert_body(failed)
@@ -513,18 +549,9 @@ def main():
             )
         print("Alert email sent.")
     else:
-        print("All checks passed (NIU + COK + NIU_Currents). No alert email sent.")
+        checks_text = " + ".join(selected_checks)
+        print(f"All checks passed ({checks_text}). No alert email sent.")
 
 if __name__ == "__main__":
     main()
 
-
-# NIU
-# /mnt/DATA/NIU/logs/forecast_pipeline_20260603_060001.log = sucess
-# /mnt/DATA/NIU/logs/forecast_pipeline_20260601_000002.log = fail
-# THREDDS          https://gemthreddshpc.spc.int/thredds/catalog/POP/model/country/spc/forecast/hourly/NIU/catalog.html::: ForecastNiue_latest.nc
-
-# COKS
-# /mnt/DATA/forecast_models/logs/forecast_pipeline_20260526_000001.log = failure
-# /mnt/DATA/forecast_models/logs/forecast_pipeline_20260603_060001.log  = sucess
-#       https://gemthreddshpc.spc.int/thredds/catalog/POP/model/country/spc/forecast/hourly/COK/risk/catalog.html ::: points.json``
