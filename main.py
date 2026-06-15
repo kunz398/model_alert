@@ -352,6 +352,7 @@ def CheckNiu() -> CheckResult:
     log_dir = NIU_LOG_DIR
     notes.append(f"Log directory: {log_dir}")
 
+    is_running = False
     latest_log = _find_latest_log_for_today(log_dir=log_dir, local_today=local_today)
     if latest_log is None:
         errors.append(
@@ -382,16 +383,25 @@ def CheckNiu() -> CheckResult:
                     + " | ".join(fail_lines)
                 )
             else:
-                errors.append(
-                    "NIUE log found but no clear success marker was detected"
-                )
+                age_seconds = datetime.now().timestamp() - latest_log.stat().st_mtime
+                if age_seconds < 7200:
+                    is_running = True
+                    print("NIU log recently modified, assuming script is still running.")
+                    notes.append(f"Script is likely still running (log updated {age_seconds/60:.1f} mins ago).")
+                else:
+                    errors.append(
+                        "NIUE log found but no clear success marker was detected and log is stale."
+                    )
 
     thredds_ok, thredds_message = _check_thredds_has_today_utc()
     if thredds_ok:
         print("THREDDS file there")
         notes.append(thredds_message)
     else:
-        errors.append(f"No THREDDS file found or date mismatch: {thredds_message}")
+        if is_running:
+            notes.append(f"THREDDS check skipped because script is still running: {thredds_message}")
+        else:
+            errors.append(f"No THREDDS file found or date mismatch: {thredds_message}")
 
     return CheckResult(errors=errors, notes=notes)
 
@@ -404,6 +414,7 @@ def CheckCok() -> CheckResult:
     log_dir = COK_LOG_DIR
     notes.append(f"Log directory: {log_dir}")
 
+    is_running = False
     latest_log = _find_latest_log_for_today(log_dir=log_dir, local_today=local_today)
     if latest_log is None:
         errors.append(
@@ -434,16 +445,25 @@ def CheckCok() -> CheckResult:
                 print("COK model ran successfully")
                 notes.append("COK model log indicates successful completion")
             else:
-                notes.append(
-                    "COK log has no explicit success marker, but no failure indicators were found"
-                )
+                age_seconds = datetime.now().timestamp() - latest_log.stat().st_mtime
+                if age_seconds < 7200:
+                    is_running = True
+                    print("COK log recently modified, assuming script is still running.")
+                    notes.append(f"Script is likely still running (log updated {age_seconds/60:.1f} mins ago).")
+                else:
+                    notes.append(
+                        "COK log has no explicit success marker, but no failure indicators were found"
+                    )
 
     thredds_ok, thredds_message = _check_cok_thredds_has_today_utc()
     if thredds_ok:
         print("COK THREDDS points.json is current")
         notes.append(thredds_message)
     else:
-        errors.append(f"COK THREDDS check failed: {thredds_message}")
+        if is_running:
+            notes.append(f"THREDDS check skipped because script is still running: {thredds_message}")
+        else:
+            errors.append(f"COK THREDDS check failed: {thredds_message}")
 
     return CheckResult(errors=errors, notes=notes)
 
@@ -456,6 +476,7 @@ def CheckCrocoNiu() -> CheckResult:
     log_dir = CROCO_NIU_LOG_DIR
     notes.append(f"Log directory: {log_dir}")
 
+    is_running = False
     latest_log = _find_croco_log_for_today(log_dir=log_dir, local_today=local_now)
     if latest_log is None:
         expected_name = local_now.strftime("%d-%m-%Y")
@@ -491,16 +512,25 @@ def CheckCrocoNiu() -> CheckResult:
                     + " | ".join(fail_lines)
                 )
             else:
-                errors.append(
-                    "NIU_Currents log found but no clear success marker was detected"
-                )
+                age_seconds = datetime.now().timestamp() - latest_log.stat().st_mtime
+                if age_seconds < 7200:
+                    is_running = True
+                    print("NIU_Currents log recently modified, assuming script is still running.")
+                    notes.append(f"Script is likely still running (log updated {age_seconds/60:.1f} mins ago).")
+                else:
+                    errors.append(
+                        "NIU_Currents log found but no clear success marker was detected and log is stale."
+                    )
 
     thredds_ok, thredds_message = _check_croco_thredds_has_fresh_file()
     if thredds_ok:
         print("NIU_Currents THREDDS file is current")
         notes.append(thredds_message)
     else:
-        errors.append(f"NIU_Currents THREDDS check failed: {thredds_message}")
+        if is_running:
+            notes.append(f"THREDDS check skipped because script is still running: {thredds_message}")
+        else:
+            errors.append(f"NIU_Currents THREDDS check failed: {thredds_message}")
 
     return CheckResult(errors=errors, notes=notes)
 
