@@ -11,7 +11,7 @@ from xml.etree import ElementTree as ET
 import requests
 
 from send_email import send_email
-
+from check_zarr import get_zarr_model_run_time
 
 ALERT_SUBJECT = "Model Alert - NIU / COK"
 # Default recipients (used when TO_EMAILS env var is not set)
@@ -46,6 +46,10 @@ FAIL_PATTERNS = [
 NIU_SUCCESS_PATTERNS = [
     re.compile(r"niue forecast pipeline completed", re.IGNORECASE),
     re.compile(r"results transferred to thredds server", re.IGNORECASE),
+    re.compile(r"\[complete\]\s*pipeline complete\b", re.IGNORECASE),
+]
+NIU_FAIL_PATTERNS = [
+    re.compile(r"\bERROR\s+\[", re.IGNORECASE),
 ]
 
 # ── COK ──────────────────────────────────────────────────────────────────────
@@ -60,20 +64,15 @@ COK_SUCCESS_PATTERNS = [
     re.compile(r"tidal predictions saved for\s+\d+\s+points", re.IGNORECASE),
     re.compile(r"writing spectral file", re.IGNORECASE),
 ]
+COK_TRANSFER_OK_RE = re.compile(r"Transfer OK\s*:\s*(true|false)", re.IGNORECASE)
+COK_WARNING_RE = re.compile(r"WARNING:.*", re.IGNORECASE)
 
 # ── NIU Currents (CROCO) ────────────────────────────────────────────────────
 CROCO_NIU_LOG_DIR = Path(
     os.environ.get("CROCO_NIU_LOG_DIR", "croco_niue")
 )
 CROCO_LOG_FILE_RE = re.compile(r"^(\d{2})-(\d{2})-(\d{4})_run_forecast\.log$")
-CROCO_THREDDS_CATALOG_URL = os.environ.get(
-    "CROCO_THREDDS_CATALOG_URL",
-    "https://gemthreddshpc.spc.int/thredds/catalog/POP/model/country/spc/forecast/hourly/NIU_Currents/catalog.xml",
-)
-CROCO_THREDDS_FILE_NAME = os.environ.get(
-    "CROCO_THREDDS_FILE_NAME",
-    "d1_temp_salt_uv_z_all.nc",
-)
+CROCO_ZARR_DATASET = os.environ.get("CROCO_ZARR_DATASET", "d1_temp_salt_uv_z_all.zarr")
 CROCO_SUCCESS_PATTERNS = [
     re.compile(r"croco forecast complete", re.IGNORECASE),
     re.compile(r"\bok\s+transfer complete\b", re.IGNORECASE),
@@ -299,49 +298,26 @@ def _check_cok_thredds_has_today_utc() -> tuple[bool, str]:
     return True, f"COK THREDDS points.json model_run date is {model_run_date}"
 
 
-def _check_croco_thredds_has_fresh_file() -> tuple[bool, str]:
+def _check_croco_zarr_has_today_utc() -> tuple[bool, str]:
     today_utc = datetime.now(UTC).date()
     yesterday_utc = today_utc - timedelta(days=1)
 
     try:
-        response = requests.get(CROCO_THREDDS_CATALOG_URL, timeout=30)
-        response.raise_for_status()
-    except requests.RequestException as exc:
-        return False, f"Could not reach NIU_Currents THREDDS catalog: {exc}"
+        run_time = get_zarr_model_run_time(CROCO_ZARR_DATASET)
+    except Exception as exc:
+        return False, f"Could not read {CROCO_ZARR_DATASET} zarr time attrs: {exc}"
 
-    try:
-        root = ET.fromstring(response.text)
-    except ET.ParseError as exc:
-        return False, f"NIU_Currents catalog XML parse failed: {exc}"
-
-    dataset = root.find(
-        f".//t:dataset[@name='{CROCO_THREDDS_FILE_NAME}']",
-        THREDDS_NS,
-    )
-    if dataset is None:
-        return False, f"{CROCO_THREDDS_FILE_NAME} not found in NIU_Currents catalog"
-
-    modified_node = dataset.find("t:date[@type='modified']", THREDDS_NS)
-    if modified_node is None or not modified_node.text:
-        return False, f"No modified date found for {CROCO_THREDDS_FILE_NAME}"
-
-    modified_raw = modified_node.text.strip()
-    try:
-        modified_dt = datetime.fromisoformat(modified_raw.replace("Z", "+00:00"))
-    except ValueError:
-        return False, f"Could not parse modified date for {CROCO_THREDDS_FILE_NAME}: {modified_raw}"
-
-    modified_utc_date = modified_dt.astimezone(UTC).date()
-    if modified_utc_date < yesterday_utc:
+    run_date = run_time.astimezone(UTC).date()
+    if run_date < yesterday_utc:
         return (
             False,
             (
-                f"{CROCO_THREDDS_FILE_NAME} modified UTC date is "
-                f"{modified_utc_date} (expected {yesterday_utc} or {today_utc})"
+                f"{CROCO_ZARR_DATASET} model run UTC date is "
+                f"{run_date} (expected {yesterday_utc} or {today_utc})"
             ),
         )
 
-    return True, f"NIU_Currents file present (modified UTC: {modified_utc_date})"
+    return True, f"NIU_Currents zarr model run date is {run_date}"
 
 
 def CheckNiu() -> CheckResult:
@@ -369,7 +345,10 @@ def CheckNiu() -> CheckResult:
             log_text = ""
 
         if log_text:
-            fail_lines = _extract_failure_lines(log_text)
+            fail_lines = _extract_failure_lines_with_patterns(
+                log_text=log_text,
+                patterns=FAIL_PATTERNS + NIU_FAIL_PATTERNS,
+            )
             has_success_marker = any(
                 pattern.search(log_text) for pattern in NIU_SUCCESS_PATTERNS
             )
@@ -435,8 +414,17 @@ def CheckCok() -> CheckResult:
             has_success_marker = any(
                 pattern.search(log_text) for pattern in COK_SUCCESS_PATTERNS
             )
+            transfer_match = COK_TRANSFER_OK_RE.search(log_text)
 
-            if fail_lines:
+            if transfer_match:
+                if transfer_match.group(1).lower() == "true":
+                    print("COK model ran successfully")
+                    notes.append("COK pipeline summary reports Transfer OK: true")
+                else:
+                    warning_lines = COK_WARNING_RE.findall(log_text)[:8]
+                    detail = " | ".join(warning_lines) if warning_lines else "see log for details"
+                    errors.append(f"COK pipeline reported Transfer OK: false ({detail})")
+            elif fail_lines:
                 errors.append(
                     "Model run failure indicators found in COK log: "
                     + " | ".join(fail_lines)
@@ -522,15 +510,15 @@ def CheckCrocoNiu() -> CheckResult:
                         "NIU_Currents log found but no clear success marker was detected and log is stale."
                     )
 
-    thredds_ok, thredds_message = _check_croco_thredds_has_fresh_file()
-    if thredds_ok:
-        print("NIU_Currents THREDDS file is current")
-        notes.append(thredds_message)
+    zarr_ok, zarr_message = _check_croco_zarr_has_today_utc()
+    if zarr_ok:
+        print("NIU_Currents zarr file is current")
+        notes.append(zarr_message)
     else:
         if is_running:
-            notes.append(f"THREDDS check skipped because script is still running: {thredds_message}")
+            notes.append(f"Zarr check skipped because script is still running: {zarr_message}")
         else:
-            errors.append(f"NIU_Currents THREDDS check failed: {thredds_message}")
+            errors.append(f"NIU_Currents zarr check failed: {zarr_message}")
 
     return CheckResult(errors=errors, notes=notes)
 
@@ -581,6 +569,7 @@ def main():
     else:
         checks_text = " + ".join(selected_checks)
         print(f"All checks passed ({checks_text}). No alert email sent.")
+
 
 if __name__ == "__main__":
     main()
