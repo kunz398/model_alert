@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOCK_FILE="/tmp/model_alerts_croco_niue.lock"
-LOG_DIR="/mnt/DATA/model_alerts/logs"
+LOG_DIR="/data/model_alerts/logs"
 LOG_FILE="${LOG_DIR}/model_alerts_croco_niue_cron.log"
 
 mkdir -p "${LOG_DIR}"

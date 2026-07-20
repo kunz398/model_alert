@@ -324,7 +324,7 @@ def CheckNiu() -> CheckResult:
     errors: list[str] = []
     notes: list[str] = []
 
-    local_today = datetime.now().strftime("%Y%m%d")
+    local_today = datetime.now(UTC).strftime("%Y%m%d")
     log_dir = NIU_LOG_DIR
     notes.append(f"Log directory: {log_dir}")
 
@@ -389,7 +389,7 @@ def CheckCok() -> CheckResult:
     errors: list[str] = []
     notes: list[str] = []
 
-    local_today = datetime.now().strftime("%Y%m%d")
+    local_today = datetime.now(UTC).strftime("%Y%m%d")
     log_dir = COK_LOG_DIR
     notes.append(f"Log directory: {log_dir}")
 
