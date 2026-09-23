@@ -1,0 +1,153 @@
+[2026-07-07 09:48:25 +12] Starting NIU_CURRENTS model alert run
+[2026-07-07 09:48:25 +12] Using ENABLED_CHECKS=NIU_CURRENTS
+ Container model_alert-email_sender-run-05db701b1468 Creating 
+ Container model_alert-email_sender-run-05db701b1468 Created 
+Traceback (most recent call last):
+  File "/app/main.py", line 14, in <module>
+    from check_zarr import get_zarr_model_run_time
+ModuleNotFoundError: No module named 'check_zarr'
+
+[2026-07-07 10:00:01 +12] Starting NIU_CURRENTS model alert run
+[2026-07-07 10:00:01 +12] Using ENABLED_CHECKS=NIU_CURRENTS
+ Container model_alert-email_sender-run-b20c5f7d3811 Creating 
+ Container model_alert-email_sender-run-b20c5f7d3811 Created 
+Traceback (most recent call last):
+  File "/app/main.py", line 14, in <module>
+    from check_zarr import get_zarr_model_run_time
+ModuleNotFoundError: No module named 'check_zarr'
+
+[2026-07-08 10:00:01 +12] Starting NIU_CURRENTS model alert run
+[2026-07-08 10:00:01 +12] Using ENABLED_CHECKS=NIU_CURRENTS
+ Container model_alert-email_sender-run-334cc04e0991 Creating 
+ Container model_alert-email_sender-run-334cc04e0991 Created 
+Traceback (most recent call last):
+  File "/app/main.py", line 14, in <module>
+    from check_zarr import get_zarr_model_run_time
+ModuleNotFoundError: No module named 'check_zarr'
+
+[2026-07-09 10:00:01 +12] Starting NIU_CURRENTS model alert run
+[2026-07-09 10:00:01 +12] Using ENABLED_CHECKS=NIU_CURRENTS
+ Container model_alert-email_sender-run-ea39fc54c2f5 Creating 
+ Container model_alert-email_sender-run-ea39fc54c2f5 Created 
+Traceback (most recent call last):
+  File "/app/main.py", line 14, in <module>
+    from check_zarr import get_zarr_model_run_time
+ModuleNotFoundError: No module named 'check_zarr'
+
+[2026-07-10 10:00:01 +12] Starting NIU_CURRENTS model alert run
+[2026-07-10 10:00:01 +12] Using ENABLED_CHECKS=NIU_CURRENTS
+ Container model_alert-email_sender-run-735bf16e99af Creating 
+ Container model_alert-email_sender-run-735bf16e99af Created 
+Traceback (most recent call last):
+  File "/app/main.py", line 14, in <module>
+    from check_zarr import get_zarr_model_run_time
+ModuleNotFoundError: No module named 'check_zarr'
+
+[2026-07-11 10:00:01 +12] Starting NIU_CURRENTS model alert run
+[2026-07-11 10:00:01 +12] Using ENABLED_CHECKS=NIU_CURRENTS
+ Container model_alert-email_sender-run-a35e0bbf2238 Creating 
+ Container model_alert-email_sender-run-a35e0bbf2238 Created 
+Traceback (most recent call last):
+  File "/app/main.py", line 14, in <module>
+    from check_zarr import get_zarr_model_run_time
+ModuleNotFoundError: No module named 'check_zarr'
+
+[2026-07-12 10:00:01 +12] Starting NIU_CURRENTS model alert run
+[2026-07-12 10:00:01 +12] Using ENABLED_CHECKS=NIU_CURRENTS
+ Container model_alert-email_sender-run-02eff8edace0 Creating 
+ Container model_alert-email_sender-run-02eff8edace0 Created 
+Traceback (most recent call last):
+  File "/app/main.py", line 14, in <module>
+    from check_zarr import get_zarr_model_run_time
+ModuleNotFoundError: No module named 'check_zarr'
+
+[2026-07-13 10:00:02 +12] Starting NIU_CURRENTS model alert run
+[2026-07-13 10:00:02 +12] Using ENABLED_CHECKS=NIU_CURRENTS
+ Container model_alert-email_sender-run-ed343443dd9c Creating 
+ Container model_alert-email_sender-run-ed343443dd9c Created 
+Traceback (most recent call last):
+  File "/app/main.py", line 14, in <module>
+    from check_zarr import get_zarr_model_run_time
+ModuleNotFoundError: No module named 'check_zarr'
+
+[2026-07-14 10:00:01 +12] Starting NIU_CURRENTS model alert run
+[2026-07-14 10:00:01 +12] Using ENABLED_CHECKS=NIU_CURRENTS
+ Container model_alert-email_sender-run-2eeee27d1ae1 Creating 
+ Container model_alert-email_sender-run-2eeee27d1ae1 Created 
+Traceback (most recent call last):
+  File "/app/main.py", line 14, in <module>
+    from check_zarr import get_zarr_model_run_time
+ModuleNotFoundError: No module named 'check_zarr'
+
+[2026-07-15 10:00:01 +12] Starting NIU_CURRENTS model alert run
+[2026-07-15 10:00:01 +12] Using ENABLED_CHECKS=NIU_CURRENTS
+ Container model_alert-email_sender-run-cd3e401193fc Creating 
+ Container model_alert-email_sender-run-cd3e401193fc Created 
+Traceback (most recent call last):
+  File "/app/main.py", line 14, in <module>
+    from check_zarr import get_zarr_model_run_time
+ModuleNotFoundError: No module named 'check_zarr'
+
+[2026-07-16 10:00:01 +12] Starting NIU_CURRENTS model alert run
+[2026-07-16 10:00:01 +12] Using ENABLED_CHECKS=NIU_CURRENTS
+ Container model_alert-email_sender-run-bacc2c157041 Creating 
+ Container model_alert-email_sender-run-bacc2c157041 Created 
+Traceback (most recent call last):
+  File "/app/main.py", line 14, in <module>
+    from check_zarr import get_zarr_model_run_time
+ModuleNotFoundError: No module named 'check_zarr'
+
+[2026-07-17 10:00:01 +12] Starting NIU_CURRENTS model alert run
+[2026-07-17 10:00:01 +12] Using ENABLED_CHECKS=NIU_CURRENTS
+ Container model_alert-email_sender-run-f9ccf6440c8b Creating 
+ Container model_alert-email_sender-run-f9ccf6440c8b Created 
+Traceback (most recent call last):
+  File "/app/main.py", line 14, in <module>
+    from check_zarr import get_zarr_model_run_time
+ModuleNotFoundError: No module named 'check_zarr'
+
+[2026-07-18 10:00:01 +12] Starting NIU_CURRENTS model alert run
+[2026-07-18 10:00:01 +12] Using ENABLED_CHECKS=NIU_CURRENTS
+ Container model_alert-email_sender-run-63cb175cc20e Creating 
+ Container model_alert-email_sender-run-63cb175cc20e Created 
+Traceback (most recent call last):
+  File "/app/main.py", line 14, in <module>
+    from check_zarr import get_zarr_model_run_time
+ModuleNotFoundError: No module named 'check_zarr'
+
+[2026-07-19 10:00:01 +12] Starting NIU_CURRENTS model alert run
+[2026-07-19 10:00:01 +12] Using ENABLED_CHECKS=NIU_CURRENTS
+ Container model_alert-email_sender-run-fa643fcc2680 Creating 
+ Container model_alert-email_sender-run-fa643fcc2680 Created 
+Traceback (most recent call last):
+  File "/app/main.py", line 14, in <module>
+    from check_zarr import get_zarr_model_run_time
+ModuleNotFoundError: No module named 'check_zarr'
+
+[2026-07-20 10:00:01 +12] Starting NIU_CURRENTS model alert run
+[2026-07-20 10:00:01 +12] Using ENABLED_CHECKS=NIU_CURRENTS
+ Container model_alert-email_sender-run-201995f48ea4 Creating 
+ Container model_alert-email_sender-run-201995f48ea4 Created 
+Traceback (most recent call last):
+  File "/app/main.py", line 14, in <module>
+    from check_zarr import get_zarr_model_run_time
+ModuleNotFoundError: No module named 'check_zarr'
+
+[2026-07-21 10:00:01 +12] Starting NIU_CURRENTS model alert run
+[2026-07-21 10:00:01 +12] Using ENABLED_CHECKS=NIU_CURRENTS
+ Container model_alert-email_sender-run-1f49a6e4b240 Creating 
+ Container model_alert-email_sender-run-1f49a6e4b240 Created 
+Traceback (most recent call last):
+  File "/app/main.py", line 14, in <module>
+    from check_zarr import get_zarr_model_run_time
+ModuleNotFoundError: No module named 'check_zarr'
+
+[2026-07-21 10:55:25 +12] Starting NIU_CURRENTS model alert run
+[2026-07-21 10:55:25 +12] Using ENABLED_CHECKS=NIU_CURRENTS
+ Container model_alert-email_sender-run-7c2c2e97caa9 Creating 
+ Container model_alert-email_sender-run-7c2c2e97caa9 Created 
+Traceback (most recent call last):
+  File "/app/main.py", line 14, in <module>
+    from check_zarr import get_zarr_model_run_time
+ModuleNotFoundError: No module named 'check_zarr'
+
