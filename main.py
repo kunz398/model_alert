@@ -10,7 +10,8 @@ from xml.etree import ElementTree as ET
 
 import requests
 
-from send_email import send_email
+# from send_email import send_email
+from send_email import smtp_send_email #, send_email
 from check_zarr import get_zarr_model_run_time
 
 ALERT_SUBJECT = "Model Alert - NIU / COK"
@@ -552,19 +553,28 @@ def main():
 
     if failed:
         body_html = _build_combined_alert_body(failed)
-        if ATTACHMENT_PATHS:
-            send_email(
-                to_emails=recipients,
-                subject=ALERT_SUBJECT,
-                body_html=body_html,
-                attachment_paths=ATTACHMENT_PATHS,
-            )
-        else:
-            send_email(
-                to_emails=recipients,
-                subject=ALERT_SUBJECT,
-                body_html=body_html,
-            )
+        # Graph API sender ( uncommenting this and the import to use graph API instead of SMTP )
+        # if ATTACHMENT_PATHS:
+        #     send_email(
+        #         to_emails=recipients,
+        #         subject=ALERT_SUBJECT,
+        #         body_html=body_html,
+        #         attachment_paths=ATTACHMENT_PATHS,
+        #     )
+        # else:
+        #     send_email(
+        #         to_emails=recipients,
+        #         subject=ALERT_SUBJECT,
+        #         body_html=body_html,
+        #     )
+
+        # SendGrid SMTP sender
+        smtp_send_email(
+            to_emails=recipients,
+            subject=ALERT_SUBJECT,
+            body_html=body_html,
+            attachment_paths=ATTACHMENT_PATHS or None,
+        )
         print("Alert email sent.")
     else:
         checks_text = " + ".join(selected_checks)

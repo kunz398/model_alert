@@ -1,6 +1,9 @@
 
 import base64
 import os
+import smtplib
+from email.message import EmailMessage
+from email.utils import formataddr
 from pathlib import Path
 from typing import Iterable
 
@@ -124,3 +127,52 @@ def send_email(
         raise RuntimeError(
             f"Email send failed ({response.status_code}): {response.text}"
         )
+
+
+def smtp_send_email(
+    to_emails: list[str],
+    subject: str,
+    body_html: str,
+    attachment_paths: Iterable[Path] | None = None,
+) -> None:
+    host = _required_env("SENDGRID_SMTP_HOST")
+    port = int(os.getenv("SENDGRID_SMTP_PORT", "587"))
+    username = _required_env("SENDGRID_SMTP_USERNAME")
+    password = _required_env("SENDGRID_SMTP_PASSWORD")
+    from_email = _required_env("SENDGRID_FROM_EMAIL")
+    from_name = os.getenv("SENDGRID_FROM_NAME", from_email)
+    reply_to = os.getenv("SENDGRID_REPLY_TO")
+
+    recipients = [email.strip() for email in to_emails if email.strip()]
+    if not recipients:
+        raise ValueError("No recipients provided")
+
+    message = EmailMessage()
+    message["Subject"] = subject
+    message["From"] = formataddr((from_name, from_email))
+    message["To"] = ", ".join(recipients)
+    if reply_to:
+        message["Reply-To"] = reply_to
+    message.set_content("This alert requires an HTML-capable email client.")
+    message.add_alternative(body_html, subtype="html")
+
+    for path in attachment_paths or []:
+        if not path.exists():
+            raise FileNotFoundError(f"Attachment not found: {path}")
+        message.add_attachment(
+            path.read_bytes(),
+            maintype="application",
+            subtype="octet-stream",
+            filename=path.name,
+        )
+
+    # Port 465 uses implicit TLS; other ports (e.g. 587) upgrade via STARTTLS.
+    if port == 465:
+        with smtplib.SMTP_SSL(host, port, timeout=30) as server:
+            server.login(username, password)
+            server.send_message(message)
+    else:
+        with smtplib.SMTP(host, port, timeout=30) as server:
+            server.starttls()
+            server.login(username, password)
+            server.send_message(message)
